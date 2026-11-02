@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión Docente | Prof. Facundo Casciano</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS para Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- html2pdf.js CDN para generación de PDF profesional -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Chart.js para gráficos en pantalla -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(71, 85, 105, 1); }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+    .glass-input {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+    }
+    .glass-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+      background: rgba(30, 41, 59, 0.9);
+    }
+    .accent-glow {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.15;
+    }
+
+    #documentoPdfImpresion {
+      display: none;
+      background: #ffffff;
+      color: #0f172a;
+      width: 1100px;
+      padding: 35px 45px;
+      font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
+
+  <!-- Fondos ambientales -->
+  <div class="accent-glow bg-indigo-600 top-[-100px] left-[-100px]"></div>
+  <div class="accent-glow bg-cyan-500 top-[20%] right-[-150px]"></div>
+  <div class="accent-glow bg-emerald-600 bottom-[-100px] left-[30%]"></div>
+
+  <!-- NAVBAR -->
+  <header class="glass-card sticky top-0 z-40 border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+    <div class="flex items-center gap-3.5 z-10">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-[1.5px] shadow-lg shadow-indigo-500/20">
+        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-indigo-400">
+          <i data-lucide="cpu" class="w-6 h-6"></i>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Prof. Facundo Casciano
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">DGCyE</span>
+          </h1>
+        </div>
+        <p class="text-xs text-slate-400 font-medium">Panel Integral de Control Pedagógico e Informes Oficiales</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2.5 z-10 flex-wrap">
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="w-2 h-2 rounded-full bg-emerald-500 -ml-4"></span>
+        Datos Locales Activos
+      </div>
+      <button onclick="abrirModalAdministrar()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-bold border border-indigo-500/40 transition flex items-center gap-1.5 shadow-sm">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>
+        <span>Editar Escuelas & Cursos</span>
+      </button>
+      <button onclick="exportarBackupJSON()" class="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/80 transition flex items-center gap-1.5 shadow-sm">
+        <i data-lucide="download-cloud" class="w-4 h-4 text-cyan-400"></i>
+        <span>Backup</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO CENTRAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 flex-1 w-full z-10 space-y-6">
+
+    <!-- SELECTOR DE CURSO Y ACCIONES -->
+    <div class="glass-card rounded-2xl p-6 relative border border-slate-800">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="school" class="w-3.5 h-3.5 text-indigo-400"></i> Institución Educativa
+            </label>
+            <button onclick="abrirModalNuevaEscuela()" class="text-[11px] text-cyan-400 hover:underline flex items-center gap-1">
+              <i data-lucide="plus-circle" class="w-3 h-3"></i> Nueva
+            </button>
+          </div>
+          <div class="relative">
+            <select id="selEscuela" onchange="cambiarEscuela()" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold appearance-none cursor-pointer outline-none transition">
+              <!-- Carga dinámica -->
+            </select>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="book-open" class="w-3.5 h-3.5 text-cyan-400"></i> Materia & Turno
+            </label>
+            <button onclick="abrirModalNuevoCurso()" class="text-[11px] text-cyan-400 hover:underline flex items-center gap-1">
+              <i data-lucide="plus-circle" class="w-3 h-3"></i> Nuevo
+            </button>
+          </div>
+          <div class="relative">
+            <select id="selCurso" onchange="cambiarCurso()" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold appearance-none cursor-pointer outline-none transition">
+              <!-- Carga dinámica -->
+            </select>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-400"></i> Período Académico
+          </label>
+          <div class="relative">
+            <select id="selSemestre" onchange="renderizarTabActual()" class="glass-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold appearance-none cursor-pointer outline-none transition">
+              <option value="1" class="bg-slate-900 text-white">1° Semestre (Marzo - Julio)</option>
+              <option value="2" class="bg-slate-900 text-white">2° Semestre (Agosto - Diciembre)</option>
+            </select>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none"></i>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="abrirModalImportarHistorialExcel()" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-lg border border-blue-400/30 transition transform active:scale-95" title="Importar asistencias de fechas pasadas">
+            <i data-lucide="history" class="w-4 h-4 text-cyan-300"></i>
+            <span>Historial Excel</span>
+          </button>
+          <button onclick="abrirModalImportarExcel()" class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-lg border border-emerald-400/30 transition transform active:scale-95" title="Cargar lista de alumnos">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Alumnos</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PESTAÑAS (TABS) -->
+    <div class="flex border-b border-slate-800/80 gap-3 pb-2 overflow-x-auto">
+      <button id="tabBtnAsistencia" onclick="cambiarTab('asistencia')" class="tab-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-2 transition">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-400"></i>
+        <span>Tomar Asistencia</span>
+      </button>
+      <button id="tabBtnNotas" onclick="cambiarTab('notas')" class="tab-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent flex items-center gap-2 transition">
+        <i data-lucide="award" class="w-4 h-4"></i>
+        <span>Calificaciones</span>
+      </button>
+      <button id="tabBtnResumen" onclick="cambiarTab('resumen')" class="tab-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent flex items-center gap-2 transition">
+        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+        <span>Métricas & Descargas</span>
+      </button>
+    </div>
+
+    <!-- VISTA 1: ASISTENCIA DIARIA -->
+    <div id="vistaAsistencia" class="tab-content space-y-4">
+      <div class="glass-card p-4 sm:p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-indigo-400"></i> Fecha de Clase
+            </label>
+            <input type="date" id="fechaClase" onchange="cargarAsistenciaFecha()" class="glass-input rounded-xl px-3 py-2 text-sm font-semibold outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-amber-400"></i> Novedad Institucional
+            </label>
+            <select id="selNovedad" onchange="guardarNovedadDia()" class="glass-input bg-amber-950/20 border-amber-500/30 text-amber-300 rounded-xl px-3 py-2 text-sm font-semibold outline-none cursor-pointer">
+              <option value="NORMAL" class="bg-slate-900 text-white">Clase Normal Dictada</option>
+              <option value="LICENCIA" class="bg-slate-900 text-amber-300">Licencia Docente</option>
+              <option value="DUELO" class="bg-slate-900 text-amber-300">Duelo Institucional</option>
+              <option value="SERVICIOS" class="bg-slate-900 text-amber-300">Falta de Agua / Luz</option>
+              <option value="SIN_ALUMNOS" class="bg-slate-900 text-amber-300">Sin Alumnos (Paro / Inclemencia)</option>
+              <option value="FERIADO" class="bg-slate-900 text-amber-300">Feriado / Jornada Docente</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button onclick="marcarTodos('P')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-emerald-400 text-xs font-bold border border-slate-700/80 transition flex items-center justify-center gap-2">
+            <i data-lucide="check-check" class="w-4 h-4"></i>
+            <span>Todos Presentes</span>
+          </button>
+          <button onclick="guardarAsistenciaActual()" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs sm:text-sm font-bold shadow-lg border border-indigo-400/30 transition flex items-center justify-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Guardar Día</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-900/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <tr>
+                <th class="py-4 px-4 text-center w-12">#</th>
+                <th class="py-4 px-4">Estudiante</th>
+                <th class="py-4 px-4 text-slate-400">DNI</th>
+                <th class="py-4 px-4 text-center">Registro de Asistencia</th>
+                <th class="py-4 px-4 text-center">Balance Semestre</th>
+                <th class="py-4 px-4 text-center">Aviso Preceptoría</th>
+              </tr>
+            </thead>
+            <tbody id="tablaAsistenciaBody" class="divide-y divide-slate-800/60">
+              <!-- Carga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 2: CALIFICACIONES -->
+    <div id="vistaNotas" class="tab-content hidden space-y-4">
+      <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+        <div class="p-5 bg-slate-900/60 border-b border-slate-800 flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="file-check-2" class="w-4 h-4 text-indigo-400"></i> Planilla de Calificaciones
+            </h3>
+            <p class="text-xs text-slate-400">Rúbrica de Trabajos Prácticos, Evaluaciones y Nota de Cierre</p>
+          </div>
+          <button onclick="guardarNotasCurso()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 text-white text-xs sm:text-sm font-bold shadow-lg border border-indigo-400/30 transition flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i> Guardar Calificaciones
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-900/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <tr>
+                <th class="py-4 px-4">Estudiante</th>
+                <th class="py-4 px-3 text-center">TP 1</th>
+                <th class="py-4 px-3 text-center">TP 2</th>
+                <th class="py-4 px-3 text-center">TP 3</th>
+                <th class="py-4 px-3 text-center">Evaluación</th>
+                <th class="py-4 px-3 text-center">Promedio</th>
+                <th class="py-4 px-3 text-center">Nota Cierre</th>
+                <th class="py-4 px-4 text-center">Condición</th>
+              </tr>
+            </thead>
+            <tbody id="tablaNotasBody" class="divide-y divide-slate-800/60">
+              <!-- Carga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 3: RESUMEN, EVOLUCIÓN Y DESCARGAS -->
+    <div id="vistaResumen" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Clases Dictadas</p>
+              <h4 id="statClasesDictadas" class="text-3xl font-black text-white mt-1">0</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Efectivas en el período</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+              <i data-lucide="layers" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Asistencia Promedio</p>
+              <h4 id="statPromAsistencia" class="text-3xl font-black text-emerald-400 mt-1">0%</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Media grupal del curso</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <i data-lucide="user-check" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Días sin Dictado</p>
+              <h4 id="statDiasEspeciales" class="text-3xl font-black text-amber-400 mt-1">0</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Licencias, luz/agua, duelos</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i> Evolución Cronológica de Asistencia
+            </h3>
+            <p class="text-[11px] text-slate-400">Curva de presentismo fecha por fecha para evaluar la regularidad del grupo</p>
+          </div>
+          <span class="text-xs font-mono text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">Semestre Activo</span>
+        </div>
+        <div class="relative h-64 w-full">
+          <canvas id="chartEvolucion"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl overflow-hidden border border-slate-800 p-6 space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-400"></i> Planilla Oficial Consolidada
+            </h3>
+            <p class="text-xs text-slate-400">Reporte formal con métricas de porcentajes, notas y firma para entrega institucional</p>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <button onclick="descargarPlantillaHistorialExcel()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition" title="Bajar plantilla para rellenar">
+              <i data-lucide="file-down" class="w-4 h-4 text-cyan-400"></i>
+              <span>Modelo Historial</span>
+            </button>
+            <button onclick="descargarPlanillaPDF()" class="bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg border border-rose-400/30 flex items-center gap-2 transition transform active:scale-95">
+              <i data-lucide="file-text" class="w-4 h-4 text-rose-200"></i>
+              <span>Descargar PDF Oficial</span>
+            </button>
+            <button onclick="descargarPlanillaExcel()" class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg border border-emerald-400/30 flex items-center gap-2 transition transform active:scale-95">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Descargar Excel Oficial (.xlsx)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-sm" id="tablaResumenPlanilla">
+            <thead class="bg-slate-900/80 text-[11px] text-slate-400 font-bold uppercase border-b border-slate-800 tracking-wider">
+              <tr>
+                <th class="py-3.5 px-4">Estudiante</th>
+                <th class="py-3.5 px-3 text-center">Clases Dictadas</th>
+                <th class="py-3.5 px-3 text-center">Presencias</th>
+                <th class="py-3.5 px-3 text-center">Faltas</th>
+                <th class="py-3.5 px-3 text-center">% Asistencia</th>
+                <th class="py-3.5 px-3 text-center">% Inasistencia</th>
+                <th class="py-3.5 px-3 text-center">Nota Cierre</th>
+                <th class="py-3.5 px-3 text-center">Seguimiento</th>
+              </tr>
+            </thead>
+            <tbody id="tablaResumenBody" class="divide-y divide-slate-800/60">
+              <!-- Inyección JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- PLANTILLA PDF OFICIAL (ESTRUCTURA EDITORIAL IMPRIMIBLE) -->
+  <!-- ========================================================================= -->
+  <div id="documentoPdfImpresion">
+    <div style="border-bottom: 2.5px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h2 style="font-size: 15px; font-weight: 800; text-transform: uppercase; color: #0f172a; margin: 0; letter-spacing: 0.5px;">Dirección General de Cultura y Educación</h2>
+          <h3 style="font-size: 12px; font-weight: 600; color: #475569; margin: 2px 0 0 0; text-transform: uppercase;">Dirección de Educación Técnico Profesional — Provincia de Buenos Aires</h3>
+          <p style="font-size: 11px; font-weight: 500; color: #64748b; margin: 2px 0 0 0;" id="pdfEscuelaNombre">-</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="display: inline-block; padding: 4px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11px; font-weight: 700; color: #0f172a;">
+            INFORME PEDAGÓGICO OFICIAL
+          </div>
+          <p style="font-size: 10px; color: #64748b; margin: 4px 0 0 0;">Ciclo Lectivo 2026</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 11px;">
+        <div><strong style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block;">Asignatura / Curso:</strong> <span id="pdfCursoNombre" style="font-weight: 700; color: #0f172a;">-</span></div>
+        <div><strong style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block;">Período Evaluado:</strong> <span id="pdfSemestreTexto" style="font-weight: 700; color: #0f172a;">-</span></div>
+        <div><strong style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block;">Profesor Titular:</strong> <span style="font-weight: 700; color: #0f172a;">Prof. Facundo Casciano</span></div>
+        <div><strong style="color: #64748b; font-size: 9px; text-transform: uppercase; display: block;">Total Clases Dictadas:</strong> <span id="pdfClasesTotales" style="font-weight: 700; color: #0f172a;">-</span></div>
+      </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 20px;">
+      <thead>
+        <tr style="background: #0f172a; color: #ffffff;">
+          <th style="padding: 6px 8px; text-align: center; border: 1px solid #0f172a; width: 30px;">#</th>
+          <th style="padding: 6px 8px; text-align: left; border: 1px solid #0f172a;">Apellido y Nombre</th>
+          <th style="padding: 6px 8px; text-align: center; border: 1px solid #0f172a; width: 75px;">DNI</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 55px;">Clases</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 55px;">Presentes</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 50px;">Faltas</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 65px;">% Asist.</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 65px;">% Inasist.</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 45px;">TP 1</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 45px;">TP 2</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 45px;">TP 3</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 45px;">Eval.</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 55px;">Prom.</th>
+          <th style="padding: 6px 6px; text-align: center; border: 1px solid #0f172a; width: 60px;">Final</th>
+          <th style="padding: 6px 8px; text-align: center; border: 1px solid #0f172a; width: 110px;">Condición</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTablaCuerpo">
+      </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 15px; margin-bottom: 45px;">
+      <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; background: #f8fafc;">
+        <h4 style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #475569; margin: 0 0 6px 0;">Resumen Cuantitativo del Período</h4>
+        <div style="font-size: 10.5px; color: #1e293b; line-height: 1.6;">
+          • <strong>Total de Matrícula Activa:</strong> <span id="pdfTotalAlumnos">0</span> estudiantes evaluados.<br>
+          • <strong>Promedio de Asistencia Grupal:</strong> <span id="pdfPromAsistencia" style="color: #047857; font-weight: 700;">0%</span> de presentismo.<br>
+          • <strong>Tasa de Aprobación del Período:</strong> <span id="pdfPctAprobacion" style="color: #1d4ed8; font-weight: 700;">0%</span> de los estudiantes.
+        </div>
+      </div>
+      <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; background: #f8fafc;">
+        <h4 style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #475569; margin: 0 0 6px 0;">Marco de Evaluación y Justificaciones</h4>
+        <p style="font-size: 9.5px; color: #64748b; margin: 0; line-height: 1.4;">
+          Planilla confeccionada bajo normativa de Educación Técnico Profesional. Los días declarados con causales institucionales de fuerza mayor (falta de suministros, licencias o medidas gremiales) no computan en contra del porcentaje de asistencia del alumnado.
+        </p>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-around; align-items: flex-end; margin-top: 50px; padding: 0 40px;">
+      <div style="text-align: center; width: 260px;">
+        <div style="border-top: 1.5px solid #334155; padding-top: 6px; font-size: 11px; font-weight: 700; color: #0f172a;">
+          Prof. Facundo Casciano
+        </div>
+        <div style="font-size: 10px; color: #64748b;">Firma y Aclaración del Docente</div>
+        <div style="font-size: 9.5px; color: #94a3b8;">D.G.C.y.E. — Educación Técnica</div>
+      </div>
+
+      <div style="text-align: center; width: 260px;">
+        <div style="border-top: 1.5px solid #334155; padding-top: 6px; font-size: 11px; font-weight: 700; color: #0f172a;" id="pdfFirmaEscuela">
+          -
+        </div>
+        <div style="font-size: 10px; color: #64748b;">Firma y Sello de Preceptoría / Dirección</div>
+        <div style="font-size: 9.5px; color: #94a3b8;">Constancia de Recepción Institucional</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADMINISTRADOR COMPLETO DE ESCUELAS Y CURSOS (EDITAR / AGREGAR / BORRAR) -->
+  <!-- ========================================================================= -->
+  <div id="modalAdministrar" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-700/80 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="settings-2" class="w-4 h-4 text-indigo-400"></i> Administrar Escuelas, Cursos y Turnos
+          </h3>
+          <p class="text-xs text-slate-400">Podés renombrar escuelas, materias, cambiar turnos o crear nuevas divisiones</p>
+        </div>
+        <button onclick="cerrarModalAdministrar()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 pr-1 space-y-5" id="contenedorListaAdmin">
+        <!-- Render dinámico por escuela y sus cursos -->
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 flex justify-between items-center gap-3">
+        <button onclick="abrirModalNuevaEscuela()" class="px-4 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-bold border border-indigo-500/40 transition flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Nueva Escuela
+        </button>
+        <button onclick="cerrarModalAdministrar()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition">
+          Listo / Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR CURSO -->
+  <div id="modalCursoForm" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700/80">
+      <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2" id="modalCursoTitulo">
+        <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> Nuevo Curso / Materia
+      </h3>
+      <input type="hidden" id="editCursoId">
+      <input type="hidden" id="editCursoEscuelaOrigen">
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Escuela Perteneciente</label>
+          <select id="editCursoEscuela" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold">
+            <!-- Opciones JS -->
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Materia / Año y División</label>
+          <input type="text" id="editCursoNombre" placeholder="Ej: 4° 1° Electrónica Analógica" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold text-white">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Turno</label>
+          <select id="editCursoTurno" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold">
+            <option value="Mañana" class="bg-slate-900 text-white">Mañana</option>
+            <option value="Tarde" class="bg-slate-900 text-white">Tarde</option>
+            <option value="Vespertino" class="bg-slate-900 text-white">Vespertino (Noche)</option>
+            <option value="Doble Turno" class="bg-slate-900 text-white">Doble Turno</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2.5 mt-5">
+        <button onclick="cerrarModalCursoForm()" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold">Cancelar</button>
+        <button onclick="guardarCursoForm()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 text-white text-xs font-bold transition">Guardar Curso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGREGAR NUEVA ESCUELA -->
+  <div id="modalNuevaEscuela" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-700/80">
+      <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+        <i data-lucide="school" class="w-4 h-4 text-indigo-400"></i> Nueva Escuela
+      </h3>
+      <div class="text-xs mb-3">
+        <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Escuela</label>
+        <input type="text" id="inputNombreNuevaEscuela" placeholder="Ej: E.E.S.T. N° 3" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold text-white">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="cerrarModalNuevaEscuela()" class="px-3.5 py-1.5 text-slate-400 hover:text-slate-200 text-xs font-semibold">Cancelar</button>
+        <button onclick="guardarNuevaEscuela()" class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">Crear Escuela</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOTIFICACIÓN A PRECEPTORÍA -->
+  <div id="modalPreceptoria" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-700/80">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="send" class="w-4 h-4 text-indigo-400"></i> Notificación a Preceptoría
+        </h3>
+        <button onclick="cerrarModalPreceptoria()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-400 mb-2">Mensaje formal prediseñado con las estadísticas exactas del estudiante:</p>
+      <textarea id="textoAvisoPreceptoria" rows="6" class="glass-input w-full rounded-xl p-3 text-xs sm:text-sm font-mono text-slate-200 leading-relaxed outline-none"></textarea>
+      
+      <div class="flex items-center justify-end gap-3 mt-5">
+        <button onclick="copiarMensajePreceptoria()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto
+        </button>
+        <button onclick="enviarWhatsAppPreceptoria()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg transition flex items-center gap-1.5">
+          <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar por WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR ALUMNOS POR EXCEL -->
+  <div id="modalExcel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700/80">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i> Cargar Lista de Alumnos
+        </h3>
+        <button onclick="cerrarModalExcel()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+        Subí un archivo <span class="text-emerald-400 font-mono">.xlsx</span> o <span class="text-emerald-400 font-mono">.csv</span>. Columnas: <b>Apellido</b>, <b>Nombre</b> y <b>DNI</b>.
+      </p>
+      
+      <input type="file" id="inputArchivoExcel" accept=".xlsx, .xls, .csv" class="glass-input w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/30 file:text-indigo-300 hover:file:bg-indigo-600/50 mb-4 p-3 rounded-xl cursor-pointer">
+
+      <div class="flex items-center justify-end gap-3">
+        <button onclick="cerrarModalExcel()" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold">Cancelar</button>
+        <button onclick="procesarArchivoExcel()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 text-white text-xs font-bold transition">Cargar Estudiantes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR HISTORIAL DE DÍAS ANTERIORES -->
+  <div id="modalHistorialExcel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-700/80">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="calendar-check" class="w-4 h-4 text-cyan-400"></i> Importar Asistencias de Días Anteriores
+        </h3>
+        <button onclick="cerrarModalHistorialExcel()" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="text-xs text-slate-300 space-y-2 mb-4 leading-relaxed">
+        <p>La primera columna debe ser <b>Apellido</b> y las demás columnas deben tener las <b>fechas</b> como encabezado (ej: <code class="text-cyan-300 font-mono">2026-03-09</code> o <code class="text-cyan-300 font-mono">09/03/2026</code>).</p>
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-400">
+          <span class="text-indigo-300">Apellido</span> | <span class="text-emerald-300">2026-03-09</span> | <span class="text-emerald-300">2026-03-16</span><br>
+          Gómez    | P          | A<br>
+          Álvarez  | P          | P
+        </div>
+        <p class="text-slate-400">Valores admitidos: <b class="text-emerald-400">P</b> (Presente), <b class="text-rose-400">A</b> (Ausente), <b class="text-amber-400">T</b> (Tarde), <b class="text-sky-400">J</b> (Justificada).</p>
+      </div>
+
+      <input type="file" id="inputArchivoHistorialExcel" accept=".xlsx, .xls, .csv" class="glass-input w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600/30 file:text-blue-300 hover:file:bg-blue-600/50 mb-4 p-3 rounded-xl cursor-pointer">
+
+      <div class="flex items-center justify-between gap-3">
+        <button onclick="descargarPlantillaHistorialExcel()" class="text-xs text-cyan-400 hover:underline flex items-center gap-1">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Bajar plantilla de ejemplo
+        </button>
+        <div class="flex gap-2">
+          <button onclick="cerrarModalHistorialExcel()" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold">Cancelar</button>
+          <button onclick="procesarArchivoHistorialExcel()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white text-xs font-bold transition">Cargar al Sistema</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT LÓGICO -->
+  <script>
+    // Configuración inicial predeterminada (modificable por el usuario)
+    const CONFIG_POR_DEFECTO = {
+      "E.E.S.T. N° 1": [
+        { id: "t1_41_ana", nombre: "4° 1° Electrónica Analógica", turno: "Tarde" },
+        { id: "t1_41_mon", nombre: "4° 1° Montaje de Proy. Electrónicos", turno: "Tarde" },
+        { id: "t1_43_mon", nombre: "4° 3° Montaje de Proy. Electrónicos", turno: "Vespertino" }
+      ],
+      "E.E.S.T. N° 2 (Hurlingham)": [
+        { id: "t2_4_mon", nombre: "4° Año Montaje de Proyectos", turno: "Mañana" },
+        { id: "t2_5_das", nombre: "5° Año DAS (Diseños Secuenciales)", turno: "Mañana" }
+      ],
+      "E.E.S.T. N° 5": [
+        { id: "t5_4_so", nombre: "4° Año Laboratorio Sistemas Operativos", turno: "Tarde" }
+      ]
+    };
+
+    let appConfig = {};
+    let appData = { cursos: {} };
+    let pestanaActiva = 'asistencia';
+    let chartEvolucionInstance = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarDeLocalStorage();
+      inicializarEstructuras();
+      actualizarSelectorEscuelas();
+
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fechaClase').value = hoy;
+      cargarAsistenciaFecha();
+      lucide.createIcons();
+    });
+
+    function cargarDeLocalStorage() {
+      const cfgGuardada = localStorage.getItem('asistencia_profe_config_cursos');
+      if (cfgGuardada) {
+        try { appConfig = JSON.parse(cfgGuardada); } catch(e) { appConfig = CONFIG_POR_DEFECTO; }
+      } else {
+        appConfig = JSON.parse(JSON.stringify(CONFIG_POR_DEFECTO));
+      }
+
+      const datosGuardados = localStorage.getItem('asistencia_notas_profe_data');
+      if (datosGuardados) {
+        try { appData = JSON.parse(datosGuardados); } catch(e) { appData = { cursos: {} }; }
+      }
+    }
+
+    function guardarConfigEnLocalStorage() {
+      localStorage.setItem('asistencia_profe_config_cursos', JSON.stringify(appConfig));
+    }
+
+    function guardarEnLocalStorage() {
+      localStorage.setItem('asistencia_notas_profe_data', JSON.stringify(appData));
+    }
+
+    function inicializarEstructuras() {
+      Object.values(appConfig).forEach(lista => {
+        lista.forEach(c => {
+          if (!appData.cursos[c.id]) {
+            appData.cursos[c.id] = { alumnos: [], asistencias: {}, notas: {} };
+          }
+        });
+      });
+      guardarEnLocalStorage();
+    }
+
+    // ==========================================
+    // SELECTORES DINÁMICOS
+    // ==========================================
+    function actualizarSelectorEscuelas(escuelaSeleccionada = null) {
+      const selEscuela = document.getElementById('selEscuela');
+      const escuelas = Object.keys(appConfig);
+      selEscuela.innerHTML = '';
+
+      escuelas.forEach(esc => {
+        const opt = document.createElement('option');
+        opt.value = esc;
+        opt.className = 'bg-slate-900 text-white';
+        opt.textContent = esc;
+        selEscuela.appendChild(opt);
+      });
+
+      if (escuelaSeleccionada && escuelas.includes(escuelaSeleccionada)) {
+        selEscuela.value = escuelaSeleccionada;
+      }
+      cambiarEscuela();
+    }
+
+    function cambiarEscuela() {
+      const escuela = document.getElementById('selEscuela').value;
+      const selCurso = document.getElementById('selCurso');
+      selCurso.innerHTML = '';
+
+      const lista = appConfig[escuela] || [];
+      lista.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.className = 'bg-slate-900 text-white';
+        opt.textContent = `${c.nombre} (${c.turno})`;
+        selCurso.appendChild(opt);
+      });
+
+      cambiarCurso();
+    }
+
+    function cambiarCurso() {
+      const cursoId = document.getElementById('selCurso').value;
+      if (!cursoId) return;
+
+      if (!appData.cursos[cursoId]) {
+        appData.cursos[cursoId] = { alumnos: [], asistencias: {}, notas: {} };
+      }
+
+      if (appData.cursos[cursoId].alumnos.length === 0) {
+        appData.cursos[cursoId].alumnos = [
+          { id: '1', apellido: 'Gómez', nombre: 'Lucas', dni: '45.123.890' },
+          { id: '2', apellido: 'Álvarez', nombre: 'Martina', dni: '44.890.123' },
+          { id: '3', apellido: 'Fernández', nombre: 'Thiago', dni: '45.456.789' }
+        ];
+        guardarEnLocalStorage();
+      }
+
+      renderizarTabActual();
+    }
+
+    function cambiarTab(tab) {
+      pestanaActiva = tab;
+      ['asistencia', 'notas', 'resumen'].forEach(t => {
+        const vista = document.getElementById(`vista${capitalizar(t)}`);
+        const btn = document.getElementById(`tabBtn${capitalizar(t)}`);
+        if (t === tab) {
+          vista.classList.remove('hidden');
+          btn.className = 'tab-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-2 transition';
+        } else {
+          vista.classList.add('hidden');
+          btn.className = 'tab-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent flex items-center gap-2 transition';
+        }
+      });
+      renderizarTabActual();
+      lucide.createIcons();
+    }
+
+    function capitalizar(s) {
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function renderizarTabActual() {
+      if (pestanaActiva === 'asistencia') cargarAsistenciaFecha();
+      else if (pestanaActiva === 'notas') renderizarNotas();
+      else if (pestanaActiva === 'resumen') renderizarResumen();
+      lucide.createIcons();
+    }
+
+    function perteneceASemestre(fechaStr, semestre) {
+      const partes = fechaStr.split('-');
+      if (partes.length < 2) return false;
+      const mes = parseInt(partes[1], 10);
+      return semestre === '1' ? (mes >= 3 && mes <= 7) : (mes >= 8 && mes <= 12);
+    }
+
+    function calcularMetricasAlumno(cursoId, alumnoId, semestre) {
+      const curso = appData.cursos[cursoId];
+      let clasesTotales = 0, presentes = 0, faltas = 0, diasEspeciales = 0;
+
+      if (curso && curso.asistencias) {
+        Object.entries(curso.asistencias).forEach(([fecha, data]) => {
+          if (perteneceASemestre(fecha, semestre)) {
+            if (data.novedad === 'NORMAL') {
+              clasesTotales++;
+              const st = data.registros ? data.registros[alumnoId] : 'P';
+              if (st === 'P') presentes += 1;
+              else if (st === 'T') { presentes += 0.5; faltas += 0.5; }
+              else if (st === 'A') faltas += 1;
+              else if (st === 'J') faltas += 0;
+            } else {
+              diasEspeciales++;
+            }
+          }
+        });
+      }
+
+      const pctAsist = clasesTotales > 0 ? Math.round((presentes / clasesTotales) * 100) : 100;
+      const pctFalta = clasesTotales > 0 ? Math.round((faltas / clasesTotales) * 100) : 0;
+      return { clasesTotales, presentes, faltas, diasEspeciales, pctAsist, pctFalta };
+    }
+
+    // ==========================================
+    // ASISTENCIA DIARIA
+    // ==========================================
+    function cargarAsistenciaFecha() {
+      const cursoId = document.getElementById('selCurso').value;
+      const fecha = document.getElementById('fechaClase').value;
+      const curso = appData.cursos[cursoId];
+      const tbody = document.getElementById('tablaAsistenciaBody');
+      tbody.innerHTML = '';
+      if (!fecha || !curso) return;
+
+      const datosFecha = (curso.asistencias && curso.asistencias[fecha]) ? curso.asistencias[fecha] : { novedad: 'NORMAL', registros: {} };
+      document.getElementById('selNovedad').value = datosFecha.novedad || 'NORMAL';
+      const semActual = document.getElementById('selSemestre').value;
+
+      (curso.alumnos || []).forEach((al, index) => {
+        const estado = (datosFecha.registros && datosFecha.registros[al.id]) ? datosFecha.registros[al.id] : 'P';
+        const metricas = calcularMetricasAlumno(cursoId, al.id, semActual);
+
+        let badgeAlerta = '';
+        if (metricas.clasesTotales >= 3 && metricas.pctFalta >= 20) {
+          badgeAlerta = `<button onclick="abrirModalPreceptoria('${al.apellido} ${al.nombre}', ${metricas.faltas}, ${metricas.clasesTotales}, ${metricas.pctFalta})" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 mx-auto transition">
+            <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Avisar (${metricas.pctFalta}%)
+          </button>`;
+        } else {
+          badgeAlerta = `<span class="text-xs text-slate-500 font-medium">Regular (${metricas.pctFalta}%)</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/40 transition";
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 text-center text-slate-500 font-mono text-xs">${index + 1}</td>
+          <td class="py-3.5 px-4 font-semibold text-white">${al.apellido}, ${al.nombre}</td>
+          <td class="py-3.5 px-4 text-slate-400 text-xs font-mono">${al.dni || '-'}</td>
+          <td class="py-3.5 px-4 text-center">
+            <div class="inline-flex rounded-xl p-1 bg-slate-900/90 border border-slate-800 gap-1" data-alumno-id="${al.id}">
+              <button onclick="setEstadoBtn(this, 'P')" class="asist-btn px-3 py-1 text-xs font-bold rounded-lg transition ${estado === 'P' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}">P</button>
+              <button onclick="setEstadoBtn(this, 'A')" class="asist-btn px-3 py-1 text-xs font-bold rounded-lg transition ${estado === 'A' ? 'bg-rose-600 text-white shadow' : 'text-slate-400 hover:text-white'}">A</button>
+              <button onclick="setEstadoBtn(this, 'T')" class="asist-btn px-3 py-1 text-xs font-bold rounded-lg transition ${estado === 'T' ? 'bg-amber-500 text-white shadow' : 'text-slate-400 hover:text-white'}">T</button>
+              <button onclick="setEstadoBtn(this, 'J')" class="asist-btn px-3 py-1 text-xs font-bold rounded-lg transition ${estado === 'J' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-white'}">J</button>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 text-center text-xs">
+            <span class="text-emerald-400 font-bold font-mono">${metricas.presentes}P</span> · 
+            <span class="text-rose-400 font-bold font-mono">${metricas.faltas}A</span> 
+            <span class="text-slate-500 font-mono">(${metricas.clasesTotales} tot)</span>
+          </td>
+          <td class="py-3.5 px-4 text-center">${badgeAlerta}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function setEstadoBtn(btn, tipo) {
+      const container = btn.parentElement;
+      container.querySelectorAll('.asist-btn').forEach(b => {
+        b.className = 'asist-btn px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+      });
+
+      if (tipo === 'P') btn.className = 'asist-btn px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow transition';
+      if (tipo === 'A') btn.className = 'asist-btn px-3 py-1 text-xs font-bold rounded-lg bg-rose-600 text-white shadow transition';
+      if (tipo === 'T') btn.className = 'asist-btn px-3 py-1 text-xs font-bold rounded-lg bg-amber-500 text-white shadow transition';
+      if (tipo === 'J') btn.className = 'asist-btn px-3 py-1 text-xs font-bold rounded-lg bg-sky-600 text-white shadow transition';
+    }
+
+    function marcarTodos(tipo) {
+      document.querySelectorAll('#tablaAsistenciaBody div[data-alumno-id]').forEach(c => {
+        const btn = Array.from(c.querySelectorAll('button')).find(b => b.textContent.trim() === tipo);
+        if (btn) setEstadoBtn(btn, tipo);
+      });
+    }
+
+    function guardarAsistenciaActual() {
+      const cursoId = document.getElementById('selCurso').value;
+      const fecha = document.getElementById('fechaClase').value;
+      const novedad = document.getElementById('selNovedad').value;
+      if (!fecha) return alert('Por favor seleccioná una fecha.');
+
+      if (!appData.cursos[cursoId].asistencias) appData.cursos[cursoId].asistencias = {};
+
+      const registros = {};
+      document.querySelectorAll('#tablaAsistenciaBody div[data-alumno-id]').forEach(div => {
+        const alId = div.getAttribute('data-alumno-id');
+        const activo = div.querySelector('.bg-emerald-600, .bg-rose-600, .bg-amber-500, .bg-sky-600');
+        registros[alId] = activo ? activo.textContent.trim() : 'P';
+      });
+
+      appData.cursos[cursoId].asistencias[fecha] = { novedad, registros };
+      guardarEnLocalStorage();
+      alert(`Asistencia guardada con éxito para la fecha ${fecha}.`);
+      cargarAsistenciaFecha();
+    }
+
+    function guardarNovedadDia() {}
+
+    // ==========================================
+    // NOTAS
+    // ==========================================
+    function renderizarNotas() {
+      const cursoId = document.getElementById('selCurso').value;
+      const semActual = document.getElementById('selSemestre').value;
+      const curso = appData.cursos[cursoId];
+      const tbody = document.getElementById('tablaNotasBody');
+      tbody.innerHTML = '';
+      if (!curso) return;
+
+      (curso.alumnos || []).forEach(al => {
+        const nData = (curso.notas && curso.notas[al.id] && curso.notas[al.id]['s' + semActual]) ? curso.notas[al.id]['s' + semActual] : { tp1: '', tp2: '', tp3: '', eval: '', cierre: '' };
+
+        const notasValidas = [nData.tp1, nData.tp2, nData.tp3, nData.eval].filter(v => v !== '' && !isNaN(v)).map(Number);
+        const prom = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : '-';
+        const aprobado = (parseFloat(nData.cierre) >= 7 || (nData.cierre === '' && parseFloat(prom) >= 7));
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/40 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-white">${al.apellido}, ${al.nombre}</td>
+          <td class="py-2 px-2 text-center"><input type="number" min="1" max="10" step="0.5" class="glass-input w-14 rounded-lg p-1.5 text-center font-mono text-sm" data-al-id="${al.id}" data-campo="tp1" value="${nData.tp1 || ''}"></td>
+          <td class="py-2 px-2 text-center"><input type="number" min="1" max="10" step="0.5" class="glass-input w-14 rounded-lg p-1.5 text-center font-mono text-sm" data-al-id="${al.id}" data-campo="tp2" value="${nData.tp2 || ''}"></td>
+          <td class="py-2 px-2 text-center"><input type="number" min="1" max="10" step="0.5" class="glass-input w-14 rounded-lg p-1.5 text-center font-mono text-sm" data-al-id="${al.id}" data-campo="tp3" value="${nData.tp3 || ''}"></td>
+          <td class="py-2 px-2 text-center"><input type="number" min="1" max="10" step="0.5" class="glass-input w-14 rounded-lg p-1.5 text-center font-mono text-sm" data-al-id="${al.id}" data-campo="eval" value="${nData.eval || ''}"></td>
+          <td class="py-2 px-2 text-center font-mono font-bold text-slate-300 text-sm">${prom}</td>
+          <td class="py-2 px-2 text-center"><input type="number" min="1" max="10" step="0.5" class="glass-input bg-indigo-950/40 border-indigo-500/40 text-indigo-300 font-bold font-mono w-14 rounded-lg p-1.5 text-center text-sm" data-al-id="${al.id}" data-campo="cierre" value="${nData.cierre || ''}"></td>
+          <td class="py-2 px-4 text-center">
+            ${aprobado ? '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Aprobado</span>' : '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">En Proceso</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function guardarNotasCurso() {
+      const cursoId = document.getElementById('selCurso').value;
+      const semActual = document.getElementById('selSemestre').value;
+      if (!appData.cursos[cursoId].notas) appData.cursos[cursoId].notas = {};
+
+      document.querySelectorAll('#tablaNotasBody input[data-al-id]').forEach(input => {
+        const alId = input.getAttribute('data-al-id');
+        const campo = input.getAttribute('data-campo');
+        const val = input.value;
+
+        if (!appData.cursos[cursoId].notas[alId]) appData.cursos[cursoId].notas[alId] = { s1: {}, s2: {} };
+        if (!appData.cursos[cursoId].notas[alId]['s' + semActual]) appData.cursos[cursoId].notas[alId]['s' + semActual] = {};
+
+        appData.cursos[cursoId].notas[alId]['s' + semActual][campo] = val;
+      });
+
+      guardarEnLocalStorage();
+      alert('Planilla de calificaciones guardada.');
+      renderizarNotas();
+    }
+
+    // ==========================================
+    // RESUMEN Y GRÁFICO
+    // ==========================================
+    function renderizarResumen() {
+      const cursoId = document.getElementById('selCurso').value;
+      const semActual = document.getElementById('selSemestre').value;
+      const curso = appData.cursos[cursoId];
+      const tbody = document.getElementById('tablaResumenBody');
+      tbody.innerHTML = '';
+      if (!curso) return;
+
+      let maxClases = 0, sumaPct = 0, diasEsp = 0;
+
+      if (curso.asistencias) {
+        Object.entries(curso.asistencias).forEach(([f, d]) => {
+          if (perteneceASemestre(f, semActual) && d.novedad !== 'NORMAL') diasEsp++;
+        });
+      }
+
+      (curso.alumnos || []).forEach(al => {
+        const m = calcularMetricasAlumno(cursoId, al.id, semActual);
+        if (m.clasesTotales > maxClases) maxClases = m.clasesTotales;
+        sumaPct += m.pctAsist;
+
+        const notas = (curso.notas && curso.notas[al.id] && curso.notas[al.id]['s' + semActual]) ? curso.notas[al.id]['s' + semActual] : {};
+        const notaCierre = notas.cierre || '-';
+
+        let badgeAviso = '';
+        if (m.clasesTotales >= 3 && m.pctFalta >= 20) {
+          badgeAviso = `<button onclick="abrirModalPreceptoria('${al.apellido} ${al.nombre}', ${m.faltas}, ${m.clasesTotales}, ${m.pctFalta})" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1 rounded-xl font-bold transition flex items-center gap-1 mx-auto">
+            <i data-lucide="bell" class="w-3.5 h-3.5"></i> Notificar
+          </button>`;
+        } else {
+          badgeAviso = `<span class="text-xs text-slate-500">Regular</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/40 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-white">${al.apellido}, ${al.nombre}</td>
+          <td class="py-3 px-3 text-center font-mono text-slate-300">${m.clasesTotales}</td>
+          <td class="py-3 px-3 text-center text-emerald-400 font-bold font-mono">${m.presentes}</td>
+          <td class="py-3 px-3 text-center text-rose-400 font-bold font-mono">${m.faltas}</td>
+          <td class="py-3 px-3 text-center font-bold text-slate-200">${m.pctAsist}%</td>
+          <td class="py-3 px-3 text-center font-bold text-rose-400">${m.pctFalta}%</td>
+          <td class="py-3 px-3 text-center font-mono font-bold text-indigo-400">${notaCierre}</td>
+          <td class="py-3 px-3 text-center">${badgeAviso}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('statClasesDictadas').textContent = maxClases;
+      const promTotal = curso.alumnos.length > 0 ? Math.round(sumaPct / curso.alumnos.length) : 0;
+      document.getElementById('statPromAsistencia').textContent = `${promTotal}%`;
+      document.getElementById('statDiasEspeciales').textContent = diasEsp;
+
+      renderizarGraficoEvolucion(cursoId, semActual);
+      lucide.createIcons();
+    }
+
+    function renderizarGraficoEvolucion(cursoId, semActual) {
+      const curso = appData.cursos[cursoId];
+      if (!curso) return;
+
+      const fechas = Object.keys(curso.asistencias || {})
+        .filter(f => perteneceASemestre(f, semActual) && curso.asistencias[f].novedad === 'NORMAL')
+        .sort();
+
+      const labelsFechas = [];
+      const dataPcts = [];
+
+      fechas.forEach(f => {
+        const registros = curso.asistencias[f].registros || {};
+        let p = 0, tot = curso.alumnos.length;
+        curso.alumnos.forEach(al => {
+          const st = registros[al.id] || 'P';
+          if (st === 'P') p += 1;
+          else if (st === 'T') p += 0.5;
+        });
+        const pct = tot > 0 ? Math.round((p / tot) * 100) : 100;
+        const partes = f.split('-');
+        labelsFechas.push(partes.length === 3 ? `${partes[2]}/${partes[1]}` : f);
+        dataPcts.push(pct);
+      });
+
+      const ctxLine = document.getElementById('chartEvolucion').getContext('2d');
+      if (chartEvolucionInstance) chartEvolucionInstance.destroy();
+
+      chartEvolucionInstance = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: labelsFechas.length > 0 ? labelsFechas : ['Sin datos'],
+          datasets: [{
+            label: '% Asistencia Grupal',
+            data: dataPcts.length > 0 ? dataPcts : [0],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#818cf8',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' }, callback: v => v + '%' }
+            },
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // ADMINISTRACIÓN DE ESCUELAS, CURSOS Y TURNOS
+    // ==========================================
+    function abrirModalAdministrar() {
+      renderizarListaAdmin();
+      document.getElementById('modalAdministrar').classList.remove('hidden');
+      document.getElementById('modalAdministrar').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function cerrarModalAdministrar() {
+      document.getElementById('modalAdministrar').classList.add('hidden');
+      document.getElementById('modalAdministrar').classList.remove('flex');
+    }
+
+    function renderizarListaAdmin() {
+      const contenedor = document.getElementById('contenedorListaAdmin');
+      contenedor.innerHTML = '';
+
+      Object.entries(appConfig).forEach(([escuela, cursos]) => {
+        const tarjetaEscuela = document.createElement('div');
+        tarjetaEscuela.className = "bg-slate-900/80 rounded-xl p-4 border border-slate-800 space-y-3";
+
+        let filasCursos = '';
+        cursos.forEach(c => {
+          filasCursos += `
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-xs">
+              <div class="space-y-0.5">
+                <span class="font-bold text-white text-sm block">${c.nombre}</span>
+                <span class="inline-flex items-center gap-1 font-mono text-[11px] text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-800/40">
+                  <i data-lucide="clock" class="w-3 h-3"></i> Turno ${c.turno}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="abrirModalEditarCurso('${escuela}', '${c.id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 font-semibold transition flex items-center gap-1">
+                  <i data-lucide="pencil" class="w-3 h-3"></i> Editar
+                </button>
+                <button onclick="eliminarCurso('${escuela}', '${c.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 font-semibold transition flex items-center gap-1" title="Eliminar curso">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        tarjetaEscuela.innerHTML = `
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <i data-lucide="school" class="w-4 h-4 text-indigo-400"></i>
+              <h4 class="font-bold text-white text-sm">${escuela}</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="abrirModalNuevoCurso('${escuela}')" class="text-xs bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 transition">
+                <i data-lucide="plus" class="w-3 h-3"></i> Agregar Materia
+              </button>
+              <button onclick="eliminarEscuela('${escuela}')" class="text-xs text-rose-400 hover:text-rose-300 p-1 transition" title="Eliminar escuela completa">
+                <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${filasCursos || '<p class="text-xs text-slate-500 italic py-1">Sin cursos registrados en esta escuela.</p>'}
+          </div>
+        `;
+
+        contenedor.appendChild(tarjetaEscuela);
+      });
+
+      lucide.createIcons();
+    }
+
+    // Modal Escuela
+    function abrirModalNuevaEscuela() {
+      document.getElementById('inputNombreNuevaEscuela').value = '';
+      document.getElementById('modalNuevaEscuela').classList.remove('hidden');
+      document.getElementById('modalNuevaEscuela').classList.add('flex');
+    }
+
+    function cerrarModalNuevaEscuela() {
+      document.getElementById('modalNuevaEscuela').classList.add('hidden');
+      document.getElementById('modalNuevaEscuela').classList.remove('flex');
+    }
+
+    function guardarNuevaEscuela() {
+      const nombre = document.getElementById('inputNombreNuevaEscuela').value.trim();
+      if (!nombre) return alert('Por favor ingresá el nombre de la escuela.');
+      if (appConfig[nombre]) return alert('Ya existe una escuela con ese nombre.');
+
+      appConfig[nombre] = [];
+      guardarConfigEnLocalStorage();
+      actualizarSelectorEscuelas(nombre);
+      cerrarModalNuevaEscuela();
+      if (!document.getElementById('modalAdministrar').classList.contains('hidden')) {
+        renderizarListaAdmin();
+      }
+      alert(`Escuela "${nombre}" agregada correctamente.`);
+    }
+
+    function eliminarEscuela(escuela) {
+      if (!confirm(`¿Estás seguro de eliminar "${escuela}" y todos sus cursos asociados?`)) return;
+      delete appConfig[escuela];
+      guardarConfigEnLocalStorage();
+      actualizarSelectorEscuelas();
+      renderizarListaAdmin();
+    }
+
+    // Modal Crear / Editar Curso
+    function abrirModalNuevoCurso(escuelaPredefinida = null) {
+      document.getElementById('modalCursoTitulo').innerHTML = '<i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> Nuevo Curso / Materia';
+      document.getElementById('editCursoId').value = '';
+      document.getElementById('editCursoEscuelaOrigen').value = '';
+      document.getElementById('editCursoNombre').value = '';
+      document.getElementById('editCursoTurno').value = 'Mañana';
+
+      poblarSelectEscuelasModal(escuelaPredefinida || document.getElementById('selEscuela').value);
+      document.getElementById('modalCursoForm').classList.remove('hidden');
+      document.getElementById('modalCursoForm').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function abrirModalEditarCurso(escuela, cursoId) {
+      const curso = (appConfig[escuela] || []).find(c => c.id === cursoId);
+      if (!curso) return;
+
+      document.getElementById('modalCursoTitulo').innerHTML = '<i data-lucide="pencil" class="w-4 h-4 text-indigo-400"></i> Modificar Curso y Turno';
+      document.getElementById('editCursoId').value = curso.id;
+      document.getElementById('editCursoEscuelaOrigen').value = escuela;
+      document.getElementById('editCursoNombre').value = curso.nombre;
+      document.getElementById('editCursoTurno').value = curso.turno || 'Mañana';
+
+      poblarSelectEscuelasModal(escuela);
+      document.getElementById('modalCursoForm').classList.remove('hidden');
+      document.getElementById('modalCursoForm').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function poblarSelectEscuelasModal(escuelaSeleccionada) {
+      const select = document.getElementById('editCursoEscuela');
+      select.innerHTML = '';
+      Object.keys(appConfig).forEach(esc => {
+        const opt = document.createElement('option');
+        opt.value = esc;
+        opt.className = 'bg-slate-900 text-white';
+        opt.textContent = esc;
+        if (esc === escuelaSeleccionada) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function cerrarModalCursoForm() {
+      document.getElementById('modalCursoForm').classList.add('hidden');
+      document.getElementById('modalCursoForm').classList.remove('flex');
+    }
+
+    function guardarCursoForm() {
+      const cursoId = document.getElementById('editCursoId').value;
+      const escuelaOrigen = document.getElementById('editCursoEscuelaOrigen').value;
+      const escuelaDestino = document.getElementById('editCursoEscuela').value;
+      const nombre = document.getElementById('editCursoNombre').value.trim();
+      const turno = document.getElementById('editCursoTurno').value;
+
+      if (!nombre) return alert('Por favor ingresá el nombre del curso / materia.');
+
+      if (cursoId) {
+        // Modo Edición: quitar de origen si cambió de escuela
+        if (escuelaOrigen && appConfig[escuelaOrigen]) {
+          appConfig[escuelaOrigen] = appConfig[escuelaOrigen].filter(c => c.id !== cursoId);
+        }
+        if (!appConfig[escuelaDestino]) appConfig[escuelaDestino] = [];
+        appConfig[escuelaDestino].push({ id: cursoId, nombre, turno });
+      } else {
+        // Modo Creación
+        const nuevoId = 'curso_' + Date.now();
+        if (!appConfig[escuelaDestino]) appConfig[escuelaDestino] = [];
+        appConfig[escuelaDestino].push({ id: nuevoId, nombre, turno });
+
+        if (!appData.cursos[nuevoId]) {
+          appData.cursos[nuevoId] = { alumnos: [], asistencias: {}, notas: {} };
+          guardarEnLocalStorage();
+        }
+      }
+
+      guardarConfigEnLocalStorage();
+      actualizarSelectorEscuelas(escuelaDestino);
+      cerrarModalCursoForm();
+      if (!document.getElementById('modalAdministrar').classList.contains('hidden')) {
+        renderizarListaAdmin();
+      }
+      alert('Curso guardado con éxito.');
+    }
+
+    function eliminarCurso(escuela, cursoId) {
+      if (!confirm('¿Estás seguro de eliminar esta materia del sistema?')) return;
+      if (appConfig[escuela]) {
+        appConfig[escuela] = appConfig[escuela].filter(c => c.id !== cursoId);
+        guardarConfigEnLocalStorage();
+        actualizarSelectorEscuelas(escuela);
+        renderizarListaAdmin();
+      }
+    }
+
+    // ==========================================
+    // GENERADOR PDF OFICIAL
+    // ==========================================
+    function descargarPlanillaPDF() {
+      const escuela = document.getElementById('selEscuela').value;
+      const cursoId = document.getElementById('selCurso').value;
+      const cursoNombre = document.getElementById('selCurso').selectedOptions[0].text;
+      const semActual = document.getElementById('selSemestre').value;
+      const curso = appData.cursos[cursoId];
+      if (!curso) return alert('No hay datos disponibles para este curso.');
+
+      const semestreTexto = semActual === '1' ? '1° Semestre (Marzo - Julio)' : '2° Semestre (Agosto - Diciembre)';
+
+      const fechasDictadas = Object.keys(curso.asistencias || {})
+        .filter(f => perteneceASemestre(f, semActual) && curso.asistencias[f].novedad === 'NORMAL');
+
+      document.getElementById('pdfEscuelaNombre').textContent = escuela;
+      document.getElementById('pdfFirmaEscuela').textContent = escuela;
+      document.getElementById('pdfCursoNombre').textContent = cursoNombre;
+      document.getElementById('pdfSemestreTexto').textContent = semestreTexto;
+      document.getElementById('pdfClasesTotales').textContent = `${fechasDictadas.length} jornadas efectivas`;
+      document.getElementById('pdfTotalAlumnos').textContent = curso.alumnos.length;
+
+      let acumAsist = 0;
+      let cantAprob = 0;
+      const tbodyPdf = document.getElementById('pdfTablaCuerpo');
+      tbodyPdf.innerHTML = '';
+
+      (curso.alumnos || []).forEach((al, idx) => {
+        const m = calcularMetricasAlumno(cursoId, al.id, semActual);
+        const notas = (curso.notas && curso.notas[al.id] && curso.notas[al.id]['s' + semActual]) ? curso.notas[al.id]['s' + semActual] : {};
+
+        const notasValidas = [notas.tp1, notas.tp2, notas.tp3, notas.eval].filter(v => v !== undefined && v !== '' && !isNaN(v)).map(Number);
+        const prom = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : '-';
+        const cierre = notas.cierre || (prom !== '-' ? prom : '-');
+        const aprobado = parseFloat(cierre) >= 7;
+
+        acumAsist += m.pctAsist;
+        if (aprobado) cantAprob++;
+
+        let condicionTexto = "REGULAR";
+        let condicionColor = "#0f172a";
+        if (m.pctFalta >= 20) {
+          condicionTexto = "RIESGO / REINC.";
+          condicionColor = "#be123c";
+        } else if (aprobado) {
+          condicionTexto = "APROBADO";
+          condicionColor = "#047857";
+        }
+
+        const bgFila = idx % 2 === 0 ? "#ffffff" : "#f8fafc";
+
+        const tr = document.createElement('tr');
+        tr.style.backgroundColor = bgFila;
+        tr.innerHTML = `
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${idx + 1}</td>
+          <td style="padding: 5px 8px; font-weight: 700; border: 1px solid #cbd5e1; color: #0f172a;">${al.apellido}, ${al.nombre}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace; font-size: 9.5px;">${al.dni || '-'}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${m.clasesTotales}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 700; color: #047857;">${m.presentes}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 700; color: #be123c;">${m.faltas}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-weight: 700;">${m.pctAsist}%</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-weight: 700; color: #be123c;">${m.pctFalta}%</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${notas.tp1 || '-'}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${notas.tp2 || '-'}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${notas.tp3 || '-'}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace;">${notas.eval || '-'}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 700;">${prom}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 800; color: #4338ca;">${cierre}</td>
+          <td style="padding: 5px; text-align: center; border: 1px solid #cbd5e1; font-weight: 800; font-size: 9.5px; color: ${condicionColor};">${condicionTexto}</td>
+        `;
+        tbodyPdf.appendChild(tr);
+      });
+
+      const promGral = curso.alumnos.length > 0 ? Math.round(acumAsist / curso.alumnos.length) : 0;
+      const pctAprob = curso.alumnos.length > 0 ? Math.round((cantAprob / curso.alumnos.length) * 100) : 0;
+
+      document.getElementById('pdfPromAsistencia').textContent = `${promGral}%`;
+      document.getElementById('pdfPctAprobacion').textContent = `${pctAprob}%`;
+
+      const elemento = document.getElementById('documentoPdfImpresion');
+      elemento.style.display = 'block';
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Planilla_Oficial_${escuela.replace(/[^a-zA-Z0-9]/g, '_')}_Semestre${semActual}_2026.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(elemento).save().then(() => {
+        elemento.style.display = 'none';
+      }).catch(err => {
+        console.error(err);
+        elemento.style.display = 'none';
+        alert('Error al generar el PDF.');
+      });
+    }
+
+    // ==========================================
+    // EXPORTACIÓN EXCEL OFICIAL
+    // ==========================================
+    function descargarPlanillaExcel() {
+      const escuela = document.getElementById('selEscuela').value;
+      const cursoId = document.getElementById('selCurso').value;
+      const cursoNombre = document.getElementById('selCurso').selectedOptions[0].text;
+      const semActual = document.getElementById('selSemestre').value;
+      const curso = appData.cursos[cursoId];
+      if (!curso) return alert('No hay datos disponibles.');
+
+      const semestreTexto = semActual === '1' ? '1° Semestre (Marzo - Julio)' : '2° Semestre (Agosto - Diciembre)';
+
+      const fechasDictadas = Object.keys(curso.asistencias || {})
+        .filter(f => perteneceASemestre(f, semActual) && curso.asistencias[f].novedad === 'NORMAL');
+
+      const totalClases = fechasDictadas.length;
+
+      const filas = [
+        ["DIRECCIÓN GENERAL DE CULTURA Y EDUCACIÓN - PCIA. DE BUENOS AIRES"],
+        ["DIRECCIÓN DE EDUCACIÓN TÉCNICO PROFESIONAL"],
+        ["PLANILLA OFICIAL DE ASISTENCIA Y CALIFICACIONES"],
+        [],
+        ["ESTABLECIMIENTO:", escuela, "", "CICLO LECTIVO:", "2026"],
+        ["CURSO / MATERIA:", cursoNombre, "", "PERÍODO:", semestreTexto],
+        ["PROFESOR A CARGO:", "Prof. Facundo Casciano", "", "TOTAL CLASES DICTADAS:", totalClases],
+        ["FECHA DE EMISIÓN:", new Date().toLocaleDateString('es-AR'), "", "ESTADO:", "Cierre Oficial"],
+        [],
+        [
+          "N°", "APELLIDO Y NOMBRE", "DNI", "CLASES TOTALES", "DÍAS PRESENTE", "FALTAS", 
+          "% ASISTENCIA", "% INASISTENCIA", "TP 1", "TP 2", "TP 3", "EVALUACIÓN", "PROMEDIO", 
+          "CALIFICACIÓN FINAL", "CONDICIÓN ACADÉMICA"
+        ]
+      ];
+
+      let acumAsistencia = 0;
+      let cantAprobados = 0;
+
+      (curso.alumnos || []).forEach((al, idx) => {
+        const m = calcularMetricasAlumno(cursoId, al.id, semActual);
+        const notas = (curso.notas && curso.notas[al.id] && curso.notas[al.id]['s' + semActual]) ? curso.notas[al.id]['s' + semActual] : {};
+
+        const notasValidas = [notas.tp1, notas.tp2, notas.tp3, notas.eval].filter(v => v !== undefined && v !== '' && !isNaN(v)).map(Number);
+        const prom = notasValidas.length > 0 ? (notasValidas.reduce((a,b)=>a+b,0) / notasValidas.length).toFixed(1) : '-';
+        const cierre = notas.cierre || (prom !== '-' ? prom : '-');
+        const aprobado = parseFloat(cierre) >= 7;
+
+        acumAsistencia += m.pctAsist;
+        if (aprobado) cantAprobados++;
+
+        let condicion = "REGULAR";
+        if (m.pctFalta >= 20) condicion = "RIESGO / REINCORPORACIÓN";
+        else if (aprobado) condicion = "PROMOVIDO / APROBADO";
+
+        filas.push([
+          idx + 1,
+          `${al.apellido}, ${al.nombre}`,
+          al.dni || '-',
+          m.clasesTotales,
+          m.presentes,
+          m.faltas,
+          `${m.pctAsist}%`,
+          `${m.pctFalta}%`,
+          notas.tp1 || '-',
+          notas.tp2 || '-',
+          notas.tp3 || '-',
+          notas.eval || '-',
+          prom,
+          cierre,
+          condicion
+        ]);
+      });
+
+      const promGralAsist = curso.alumnos.length > 0 ? Math.round(acumAsistencia / curso.alumnos.length) : 0;
+      const pctGralAprob = curso.alumnos.length > 0 ? Math.round((cantAprobados / curso.alumnos.length) * 100) : 0;
+
+      filas.push([]);
+      filas.push(["--- SÍNTESIS ESTADÍSTICA GRUPAL ---"]);
+      filas.push(["Matrícula Evaluada:", curso.alumnos.length, "Estudiantes"]);
+      filas.push(["Promedio Asistencia del Curso:", `${promGralAsist}%`]);
+      filas.push(["Porcentaje de Aprobación:", `${pctGralAprob}%`]);
+      filas.push([]);
+      filas.push([]);
+      filas.push([]);
+
+      filas.push(["", "________________________________________", "", "", "", "________________________________________"]);
+      filas.push(["", "Firma y Aclaración del Docente", "", "", "", "Firma de Preceptoría / Equipo Directivo"]);
+      filas.push(["", "Prof. Facundo Casciano", "", "", "", escuela]);
+
+      const ws = XLSX.utils.aoa_to_sheet(filas);
+      ws['!cols'] = [
+        { wch: 6 }, { wch: 30 }, { wch: 14 }, { wch: 16 }, { wch: 15 }, 
+        { wch: 10 }, { wch: 14 }, { wch: 15 }, { wch: 8 }, { wch: 8 }, 
+        { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 28 }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Planilla_Oficial");
+      XLSX.writeFile(wb, `Planilla_Oficial_${escuela.replace(/[^a-zA-Z0-9]/g, '_')}_Semestre${semActual}_2026.xlsx`);
+    }
+
+    // ==========================================
+    // HISTORIAL Y MODELO
+    // ==========================================
+    function abrirModalImportarHistorialExcel() {
+      document.getElementById('modalHistorialExcel').classList.remove('hidden');
+      document.getElementById('modalHistorialExcel').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function cerrarModalHistorialExcel() {
+      document.getElementById('modalHistorialExcel').classList.add('hidden');
+      document.getElementById('modalHistorialExcel').classList.remove('flex');
+      document.getElementById('inputArchivoHistorialExcel').value = '';
+    }
+
+    function descargarPlantillaHistorialExcel() {
+      const cursoId = document.getElementById('selCurso').value;
+      const curso = appData.cursos[cursoId];
+      if (!curso) return alert('Seleccioná un curso primero.');
+
+      const encabezados = ["Apellido", "Nombre", "2026-03-09", "2026-03-16", "2026-03-23"];
+      const filas = [encabezados];
+
+      (curso.alumnos || []).forEach(al => {
+        filas.push([al.apellido, al.nombre, "P", "P", "P"]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(filas);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Asistencias_Pasadas");
+      XLSX.writeFile(wb, `Plantilla_Historial_Asistencias.xlsx`);
+    }
+
+    function formatearFechaEstandar(valor) {
+      if (!valor) return null;
+      let str = valor.toString().trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+      const partes = str.split(/[/\-]/);
+      if (partes.length === 3) {
+        let d = partes[0].padStart(2, '0');
+        let m = partes[1].padStart(2, '0');
+        let y = partes[2];
+        if (y.length === 2) y = "20" + y;
+        if (partes[0].length === 4) return `${partes[0]}-${m}-${partes[2].padStart(2, '0')}`;
+        return `${y}-${m}-${d}`;
+      }
+      return null;
+    }
+
+    function procesarArchivoHistorialExcel() {
+      const fileInput = document.getElementById('inputArchivoHistorialExcel');
+      if (!fileInput.files.length) return alert('Por favor seleccioná un archivo con el historial.');
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          if (jsonData.length < 2) return alert('El archivo no contiene suficientes filas.');
+
+          const encabezados = jsonData[0];
+          const cursoId = document.getElementById('selCurso').value;
+          const curso = appData.cursos[cursoId];
+
+          const columnasFechas = [];
+          for (let col = 1; col < encabezados.length; col++) {
+            const fechaStr = formatearFechaEstandar(encabezados[col]);
+            if (fechaStr) {
+              columnasFechas.push({ index: col, fecha: fechaStr });
+            }
+          }
+
+          if (columnasFechas.length === 0) {
+            return alert('No se detectaron columnas de fecha válidas (ej: 2026-03-09 o 09/03/2026).');
+          }
+
+          let fechasImportadas = 0;
+          let registrosActualizados = 0;
+
+          columnasFechas.forEach(colInfo => {
+            const f = colInfo.fecha;
+            if (!curso.asistencias[f]) {
+              curso.asistencias[f] = { novedad: 'NORMAL', registros: {} };
+            }
+
+            for (let row = 1; row < jsonData.length; row++) {
+              const fila = jsonData[row];
+              if (!fila || fila.length === 0) continue;
+
+              const apellidoFila = (fila[0] || '').toString().toLowerCase().trim();
+              const valorEstado = (fila[colInfo.index] || 'P').toString().trim().toUpperCase();
+
+              let estadoLimpio = 'P';
+              if (valorEstado.startsWith('A')) estadoLimpio = 'A';
+              else if (valorEstado.startsWith('T')) estadoLimpio = 'T';
+              else if (valorEstado.startsWith('J')) estadoLimpio = 'J';
+
+              const alumnoEncontrado = curso.alumnos.find(al => 
+                al.apellido.toLowerCase().trim() === apellidoFila ||
+                `${al.apellido} ${al.nombre}`.toLowerCase().trim() === apellidoFila
+              );
+
+              if (alumnoEncontrado) {
+                curso.asistencias[f].registros[alumnoEncontrado.id] = estadoLimpio;
+                registrosActualizados++;
+              }
+            }
+            fechasImportadas++;
+          });
+
+          guardarEnLocalStorage();
+          alert(`¡Listo! Se importaron ${fechasImportadas} fecha(s) y ${registrosActualizados} registros de asistencia.`);
+          cerrarModalHistorialExcel();
+          renderizarTabActual();
+
+        } catch(err) {
+          console.error(err);
+          alert('Hubo un error al procesar el archivo Excel.');
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ==========================================
+    // NOTIFICACIÓN A PRECEPTORÍA
+    // ==========================================
+    function abrirModalPreceptoria(alumnoNom, faltas, totales, pctFalta) {
+      const escuela = document.getElementById('selEscuela').value;
+      const cursoNom = document.getElementById('selCurso').selectedOptions[0].text;
+      const sem = document.getElementById('selSemestre').value;
+
+      const texto = `Estimada Preceptoría (${escuela}):\n\nSe informa que el estudiante ${alumnoNom} perteneciente al curso ${cursoNom} registra a la fecha ${faltas} inasistencia(s) sobre un total de ${totales} clases dictadas en el ${sem}° Semestre (lo que representa un ${pctFalta}% de inasistencias acumuladas).\n\nSe remite la presente notificación para su control e intervención pedagógica institucional.\n\nAtentamente,\nProf. Facundo Casciano`;
+
+      document.getElementById('textoAvisoPreceptoria').value = texto;
+      document.getElementById('modalPreceptoria').classList.remove('hidden');
+      document.getElementById('modalPreceptoria').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function cerrarModalPreceptoria() {
+      document.getElementById('modalPreceptoria').classList.add('hidden');
+      document.getElementById('modalPreceptoria').classList.remove('flex');
+    }
+
+    function copiarMensajePreceptoria() {
+      const txt = document.getElementById('textoAvisoPreceptoria');
+      txt.select();
+      navigator.clipboard.writeText(txt.value);
+      alert('Mensaje copiado al portapapeles.');
+    }
+
+    function enviarWhatsAppPreceptoria() {
+      const txt = encodeURIComponent(document.getElementById('textoAvisoPreceptoria').value);
+      window.open(`https://api.whatsapp.com/send?text=${txt}`, '_blank');
+    }
+
+    // ==========================================
+    // IMPORTACIÓN LISTA ALUMNOS
+    // ==========================================
+    function abrirModalImportarExcel() {
+      document.getElementById('modalExcel').classList.remove('hidden');
+      document.getElementById('modalExcel').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function cerrarModalExcel() {
+      document.getElementById('modalExcel').classList.add('hidden');
+      document.getElementById('modalExcel').classList.remove('flex');
+      document.getElementById('inputArchivoExcel').value = '';
+    }
+
+    function procesarArchivoExcel() {
+      const fileInput = document.getElementById('inputArchivoExcel');
+      if (!fileInput.files.length) return alert('Por favor seleccioná un archivo .xlsx o .csv');
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          if (jsonData.length < 2) return alert('El archivo no contiene suficientes filas.');
+
+          const headers = jsonData[0].map(h => (h || '').toString().toLowerCase().trim());
+          let colApellido = headers.findIndex(h => h.includes('apellido'));
+          let colNombre = headers.findIndex(h => h.includes('nombre'));
+          let colDni = headers.findIndex(h => h.includes('dni') || h.includes('documento'));
+
+          const nuevosAlumnos = [];
+
+          for (let i = 1; i < jsonData.length; i++) {
+            const fila = jsonData[i];
+            if (!fila || fila.length === 0) continue;
+
+            let ap = colApellido !== -1 ? fila[colApellido] : fila[0];
+            let nom = colNombre !== -1 ? fila[colNombre] : (colApellido !== -1 ? '' : fila[1]);
+            let dni = colDni !== -1 ? fila[colDni] : '';
+
+            if (ap) {
+              nuevosAlumnos.push({
+                id: 'al_' + Date.now() + '_' + i,
+                apellido: ap.toString().trim(),
+                nombre: nom ? nom.toString().trim() : '',
+                dni: dni ? dni.toString().trim() : ''
+              });
+            }
+          }
+
+          if (nuevosAlumnos.length > 0) {
+            const cursoId = document.getElementById('selCurso').value;
+            appData.cursos[cursoId].alumnos = nuevosAlumnos;
+            guardarEnLocalStorage();
+            alert(`¡Se importaron ${nuevosAlumnos.length} estudiantes correctamente!`);
+            cerrarModalExcel();
+            renderizarTabActual();
+          } else {
+            alert('No se encontraron registros válidos.');
+          }
+        } catch(err) {
+          console.error(err);
+          alert('Error al leer el archivo Excel.');
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function exportarBackupJSON() {
+      const backupCompleto = {
+        config: appConfig,
+        data: appData
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupCompleto, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `backup_docente_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  </script>
+</body>
+</html>
